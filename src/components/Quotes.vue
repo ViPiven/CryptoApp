@@ -9,25 +9,22 @@
           <h3 class="quotes__subtitle">Цена</h3>
         </div>
         <ul class="quotes__list">
-          <li class="quotes__item">
-            <h2>USD</h2>
+          <li
+              class="quotes__item"
+              v-for="currencyPair in currencyPairs"
+              :key="currencyPair"
+          >
+            <h2>{{ currencyPair.pair.join(' | ') }}</h2>
             <h2>%</h2>
-            <h2>price</h2>
-          </li>
-          <li class="quotes__item">
-            <h2>USD</h2>
-            <h2>%</h2>
-            <h2>{{ price }}</h2>
-          </li>
-          <li class="quotes__item">
-            <h2>USD</h2>
-            <h2>%</h2>
-            <h2>price</h2>
+            <h2>{{ currencyPair.price }}</h2>
           </li>
         </ul>
       </div>
     </div>
-    <Diagram />
+    <Diagram
+        :getPrise="getPrise"
+        :prise="price"
+    />
   </div>
 </template>
 
@@ -36,8 +33,15 @@
 import Diagram from "@/components/Diagram";
 export default {
   name: "Quotes",
-  props: ['price'],
+  props: ['price', 'getPrise', 'runWebSocket', 'currencyPairs'],
   components: {Diagram},
+  methods: {
+
+  },
+
+  created() {
+    this.runWebSocket()
+  }
 }
 </script>
 

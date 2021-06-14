@@ -1,7 +1,13 @@
 <template>
   <div id="app">
     <Header />
-    <Quotes :price="price"/>
+    <Quotes
+        :price="price"
+        :getPrice="getPrise"
+        :runWebSocket="runWebSocket"
+        :currencyPairs="currencyPairs"
+    />
+    <h1>Hello World</h1>
   </div>
 </template>
 
@@ -17,32 +23,69 @@ export default {
   },
 
   data: () => ({
-    price: 0,
+    price: [],
+
+    currencyPairs: [
+      {
+        pair: ['USD', 'BTC'],
+        price: {},
+      },
+      {
+        pair: ['USD', 'BCH'],
+        price: {},
+      },
+      {
+        pair: ['USD', 'ETH'],
+        price: {},
+      },
+      {
+        pair: ['USD', 'XRP'],
+        price: {},
+      },
+    ],
+    selectedPair: '',
   }),
 
   methods: {
+    getPrise (currency, crypto, limit) {
+      fetch(`https://min-api.cryptocompare.com/data/v2/histominute?fsym=${crypto}&tsym=${currency}&limit=${limit}`)
+        .then(response => response.json())
+    },
+
     runWebSocket() {
-      // this is where you paste your api key
-      let apiKey = "ba496cd06cf8fca4052b30ae30d4067e0e8988c429ef71e5fc887aeaff9de89e";
+      const getPairs = this.currencyPairs.map(currencyPair => {
+        return `0~Coinbase~${currencyPair.pair[1]}~${currencyPair.pair[0]}`
+      })
+      const apiKey = "ba496cd06cf8fca4052b30ae30d4067e0e8988c429ef71e5fc887aeaff9de89e";
       let ccStreamer = new WebSocket('wss://streamer.cryptocompare.com/v2?api_key=' + apiKey);
       ccStreamer.onopen = function onStreamOpen() {
         let subRequest = {
           "action": "SubAdd",
-          "subs": ["0~Coinbase~BTC~USD"]
+          "subs": getPairs,
         };
         ccStreamer.send(JSON.stringify(subRequest));
       }
 
       ccStreamer.onmessage = (event) => {
         const message = JSON.parse(event.data);
-        this.price = message.P;
-        console.log("Received from Cryptocompare: " + message.P);
+        const price = message.P;
+        if(price) {
+          const pair = this.currencyPairs.find(currencyPair =>
+              currencyPair.pair.join('') === message.TSYM + message.FSYM
+          )
+          pair.price = price.toFixed(2)
+        }
       }
-    }
-  },
+    },
+
+      setSelectedPair(pair) {
+        this.selectedPair = pair;
+      },
+    },
+
 
   created() {
-    this.runWebSocket()
+    this.setSelectedPair(this.currencyPairs[0].pair)
   }
 }
 
